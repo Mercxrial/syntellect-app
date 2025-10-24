@@ -1,0 +1,36 @@
+.wrapper {
+	h1 {
+		font-size: 28px;
+		font-weight: 500;
+		margin-bottom: 32px;
+		color: #111827;
+	}
+
+	h2 {
+		font-size: 20px;
+		font-weight: 600;
+		margin-bottom: 16px;
+		color: '#374151';
+	}
+
+	h3 {
+		font-size: 14px;
+		font-weight: 600;
+		margin-bottom: 12px;
+		color: #6b7280;
+	}
+
+	section:not(:last-child) {
+		margin-bottom: 48px;
+	}
+}
+
+.block {
+	background-color: #f9fafb;
+	padding: 10px 20px;
+	border-radius: 8px;
+}
+
+.block:not(:last-child) {
+	margin-bottom: 16px;
+}
