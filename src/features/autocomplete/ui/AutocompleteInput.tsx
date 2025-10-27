@@ -1,5 +1,6 @@
 import { observer } from 'mobx-react-lite'
 import { useEffect, useRef } from 'react'
+import { useDebounce } from '../../../shared/hooks/useDebounce'
 import { Flag } from '../../../shared/ui/Flag'
 import { AutocompleteViewModel } from '../model/AutocompleteViewModel'
 import styles from './AutocompleteInput.module.scss'
@@ -10,9 +11,11 @@ interface AutocompleteInputProps {
 }
 
 export const AutocompleteInput: React.FC<AutocompleteInputProps> = observer(
-	({ viewModel, placeholder = 'Search country...' }) => {
+	({ viewModel, placeholder = 'Введите страну...' }) => {
 		const wrapperRef = useRef<HTMLDivElement>(null)
 		const inputRef = useRef<HTMLInputElement>(null)
+
+		const debouncedValue = useDebounce(viewModel.value, 300)
 
 		useEffect(() => {
 			const handleClickOutside = (event: MouseEvent) => {
@@ -28,9 +31,27 @@ export const AutocompleteInput: React.FC<AutocompleteInputProps> = observer(
 			return () => document.removeEventListener('mousedown', handleClickOutside)
 		}, [viewModel])
 
+		useEffect(() => {
+			if (
+				debouncedValue !== viewModel.value &&
+				viewModel.value.trim().length > 0
+			) {
+				viewModel.setLoading(true)
+			}
+		}, [viewModel.value, debouncedValue, viewModel])
+
+		useEffect(() => {
+			viewModel.fetchSuggestions(debouncedValue)
+		}, [debouncedValue, viewModel])
+
 		const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 			viewModel.setValue(e.target.value)
-			viewModel.fetchSuggestions(e.target.value)
+		}
+
+		const handleFocus = () => {
+			if (viewModel.value.trim().length > 0) {
+				viewModel.fetchSuggestions(viewModel.value)
+			}
 		}
 
 		return (
@@ -39,7 +60,7 @@ export const AutocompleteInput: React.FC<AutocompleteInputProps> = observer(
 					ref={inputRef}
 					type='text'
 					value={viewModel.value}
-					onFocus={handleInputChange}
+					onFocus={handleFocus}
 					onChange={handleInputChange}
 					placeholder={placeholder}
 					className={styles.input}

@@ -1,7 +1,7 @@
 import { action, makeObservable, observable } from 'mobx'
 
 export class BaseInputViewModel {
-	value = ''
+	value: string = ''
 
 	constructor() {
 		makeObservable(this, {

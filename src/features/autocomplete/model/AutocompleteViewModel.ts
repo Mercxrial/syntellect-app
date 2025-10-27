@@ -5,14 +5,15 @@ import { BaseInputViewModel } from '../../../entities/input/model/BaseInputViewM
 
 export class AutocompleteViewModel extends BaseInputViewModel {
 	suggestions: CountryInfo[] = []
-	isLoading = false
-	isOpen = false
-	maxSuggestions = 10
-	private currentRequestId = 0
+	isLoading: boolean = false
+	isOpen: boolean = false
+	maxSuggestions: number = 10
+	private currentRequestId: number = 0
 
-	constructor(maxSuggestions = 10) {
+	constructor(maxSuggestions: number = 10) {
 		super()
 		this.maxSuggestions = maxSuggestions
+
 		makeObservable(this, {
 			suggestions: observable,
 			isLoading: observable,
@@ -21,11 +22,13 @@ export class AutocompleteViewModel extends BaseInputViewModel {
 			fetchSuggestions: action,
 			selectSuggestion: action,
 			closeSuggestions: action,
+			setLoading: action,
 		})
 	}
 
-	get visibleSuggestions() {
+	get visibleSuggestions(): CountryInfo[] {
 		const seen = new Set<string>()
+
 		return this.suggestions
 			.filter(s => {
 				const key = `${s.name}-${s.fullName}`
@@ -36,8 +39,12 @@ export class AutocompleteViewModel extends BaseInputViewModel {
 			.slice(0, this.maxSuggestions)
 	}
 
-	async fetchSuggestions(query: string) {
-		if (!query.trim()) {
+	setLoading(loading: boolean): void {
+		this.isLoading = loading
+	}
+
+	async fetchSuggestions(query: string): Promise<void> {
+		if (!query || query.trim().length === 0) {
 			runInAction(() => {
 				this.suggestions = []
 				this.isOpen = false
@@ -47,10 +54,14 @@ export class AutocompleteViewModel extends BaseInputViewModel {
 		}
 
 		const requestId = ++this.currentRequestId
-		this.isLoading = true
+
+		runInAction(() => {
+			this.isLoading = true
+		})
 
 		try {
 			const results = await getCountryByName(query)
+
 			if (requestId === this.currentRequestId) {
 				runInAction(() => {
 					this.suggestions = results
@@ -58,20 +69,25 @@ export class AutocompleteViewModel extends BaseInputViewModel {
 					this.isLoading = false
 				})
 			}
-		} catch {
-			runInAction(() => {
-				this.isLoading = false
-				this.isOpen = false
-			})
+		} catch (error) {
+			if (requestId === this.currentRequestId) {
+				runInAction(() => {
+					this.suggestions = []
+					this.isLoading = false
+					this.isOpen = false
+				})
+			}
 		}
 	}
 
-	selectSuggestion(s: CountryInfo) {
-		this.value = s.name
+	selectSuggestion(suggestion: CountryInfo): void {
+		this.value = suggestion.name
+		this.suggestions = []
 		this.isOpen = false
+		this.isLoading = false
 	}
 
-	closeSuggestions() {
+	closeSuggestions(): void {
 		this.isOpen = false
 	}
 }
